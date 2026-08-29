@@ -10,6 +10,9 @@
      Mesmo design system "Luxo Silencioso" do Gaia Editor no PC
      (src/styles.css) — reaproveitado aqui pro Controle Remoto mobile
      ficar visualmente da mesma família, não um app amador à parte.
+     v3: + Início, Enviar vídeo, Repostagem, Comunidade, Perfil (avatar
+     no cabeçalho), tabbar de 7 abas com scroll horizontal + indicador
+     animado, e um punhado de animações mais chamativas.
      ═══════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #120A05;
@@ -71,14 +74,26 @@
   .brand-text { display: flex; flex-direction: column; gap: 1px; }
   .brand-name { font-family: var(--font-serif); font-size: 14.5px; color: #E8D0A0; letter-spacing: 0.3px; }
   .brand-sub { font-size: 8px; font-weight: 700; color: rgba(200,168,122,0.45); letter-spacing: 1.6px; text-transform: uppercase; }
-  .user-email { font-size: 9.5px; color: rgba(240,232,220,0.35); margin-top: 2px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  .logout-btn {
-    background: transparent; border: 1px solid rgba(200,168,122,0.2); color: rgba(240,232,220,0.55);
-    font-size: 11px; font-family: var(--font-sans); padding: 7px 14px; border-radius: var(--r-pill); cursor: pointer;
-    transition: all 0.2s var(--ease); white-space: nowrap;
+  /* ── Avatar do usuário no cabeçalho -> abre Perfil ──────────────────── */
+  .header-avatar-btn {
+    position: relative; width: 42px; height: 42px; border-radius: 50%;
+    border: none; background: transparent; cursor: pointer; padding: 0; flex-shrink: 0;
   }
-  .logout-btn:active { background: rgba(200,168,122,0.08); border-color: rgba(200,168,122,0.35); color: rgba(240,232,220,0.85); }
+  .header-avatar-ring {
+    position: absolute; inset: -4px; border-radius: 50%;
+    border: 1.5px solid var(--gold-soft); opacity: 0.55;
+    animation: avatar-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes avatar-pulse { 0%,100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(1.16); opacity: 0; } }
+  .header-avatar-img {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(200,168,122,0.28), rgba(200,168,122,0.08)) center/cover;
+    border: 1px solid rgba(200,168,122,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 14px; color: #E8D0A0;
+    overflow: hidden;
+  }
 
   /* ── Glass card (equivalente ao .glass-champagne do desktop) ───────── */
   .card {
@@ -95,6 +110,20 @@
     text-transform: uppercase; color: var(--gold); margin-bottom: 14px;
   }
   p.body-text { color: rgba(240,232,220,0.55); font-size: 12.5px; line-height: 1.6; }
+
+  /* ── Tela "em breve" (Enviar vídeo pra fila) ────────────────────────── */
+  .soon-card { text-align: center; padding: 40px 24px; }
+  .soon-icon {
+    width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(200,168,122,0.22), rgba(200,168,122,0.06));
+    border: 1px solid rgba(200,168,122,0.28);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: var(--gold);
+    animation: avatar-pulse 2.6s ease-in-out infinite;
+  }
+  .soon-card .title { margin-bottom: 10px; }
+  .soon-card .body-text { margin-bottom: 14px; }
+  .soon-card .caption { font-size: 11px; color: rgba(200,168,122,0.5); line-height: 1.5; }
 
   label.field-label {
     display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px;
@@ -133,16 +162,25 @@
   .btn-primary {
     background: linear-gradient(135deg, #C8A87A, #A08050); color: #1A0A02;
     box-shadow: 0 4px 20px -4px rgba(200,168,122,0.5);
+    position: relative; overflow: hidden;
   }
+  /* brilho passando no botão principal — chamativo sem ser irritante (loop lento) */
+  .btn-primary::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform: skewX(-20deg); animation: btn-shine 3.4s ease-in-out infinite;
+  }
+  @keyframes btn-shine { 0% { left: -60%; } 42%, 100% { left: 130%; } }
   .btn-ghost {
     background: transparent; border: 1px solid rgba(200,168,122,0.2); color: rgba(240,232,220,0.6);
     margin-top: 10px;
   }
 
   .msg { margin-top: 14px; font-size: 12.5px; line-height: 1.55; }
-  .msg.ok { color: var(--sage-soft); }
-  .msg.erro { color: var(--danger-soft); }
+  .msg.ok { color: var(--sage-soft); animation: msg-pop 0.35s cubic-bezier(.34,1.56,.64,1) both; }
+  .msg.erro { color: var(--danger-soft); animation: msg-pop 0.35s cubic-bezier(.34,1.56,.64,1) both; }
   .msg.warn { color: #E8D0A0; }
+  @keyframes msg-pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
   /* ── Status dot (mesmo padrão .status-dot / .tiktok-account-dot) ────── */
   .conn-status {
@@ -203,31 +241,43 @@
   .progress-fill { height: 100%; background: linear-gradient(135deg, #C8A87A, #A08050); width: 0%; transition: width 0.2s; }
   .progress-label { font-size: 10.5px; color: rgba(200,168,122,0.55); margin-top: 7px; text-align: center; }
 
-  /* ── Barra inferior de navegação (equivalente mobile da .sidebar) ───── */
+  /* ── Barra inferior de navegação (7 abas, scroll horizontal) ─────────── */
   nav.tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
     background: rgba(8, 5, 2, 0.92);
     backdrop-filter: blur(30px) saturate(120%); -webkit-backdrop-filter: blur(30px) saturate(120%);
     border-top: 1px solid rgba(200,168,122,0.1);
     display: flex; padding: 9px 8px calc(9px + env(safe-area-inset-bottom));
-    gap: 6px;
+    gap: 4px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    scroll-snap-type: x proximity;
   }
+  nav.tabbar::-webkit-scrollbar { display: none; }
   nav.tabbar .tab-btn {
-    flex: 1; background: transparent; border: 1px solid transparent; border-radius: var(--r-sm);
+    flex: 0 0 auto; width: 74px; scroll-snap-align: start;
+    background: transparent; border: 1px solid transparent; border-radius: var(--r-sm);
     color: rgba(240,232,220,0.4); font-family: var(--font-sans);
     display: flex; flex-direction: column; align-items: center; gap: 4px;
-    font-size: 10px; padding: 8px 4px; cursor: pointer; transition: all 0.2s var(--ease);
+    font-size: 9.5px; padding: 8px 3px; cursor: pointer; transition: all 0.2s var(--ease);
   }
-  nav.tabbar .tab-btn .ic { font-size: 17px; line-height: 1; color: rgba(200,168,122,0.4); transition: color 0.2s var(--ease); }
+  nav.tabbar .tab-btn .ic { font-size: 17px; line-height: 1; color: rgba(200,168,122,0.4); transition: color 0.2s var(--ease), transform 0.25s cubic-bezier(.34,1.56,.64,1); }
   nav.tabbar .tab-btn.active {
     background: rgba(200,168,122,0.1); color: #E8D0A0; border-color: rgba(200,168,122,0.2); font-weight: 600;
   }
-  nav.tabbar .tab-btn.active .ic { color: var(--gold); }
+  nav.tabbar .tab-btn.active .ic { color: var(--gold); transform: scale(1.16); }
+  .tab-indicator {
+    position: absolute; bottom: 4px; height: 2px; left: 0; width: 0; border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold), #E8D0A0);
+    box-shadow: 0 0 8px rgba(200,168,122,0.65);
+    transition: left 0.32s cubic-bezier(.22,1,.36,1), width 0.32s cubic-bezier(.22,1,.36,1);
+    pointer-events: none;
+  }
 
   .view { display: none; }
-  .view.active { display: block; }
+  .view.active { display: block; animation: view-in 0.38s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes view-in { from { opacity: 0; transform: translateY(10px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-  /* ── Tela de login ──────────────────────────────────────────────────── */
+  /* ── Tela de login ────────────────────────────────────────────────── */
   .login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 26px; position: relative; z-index: 1; }
   .login-screen .card { width: 100%; max-width: 380px; margin-bottom: 0; }
   .login-logo { text-align: center; margin-bottom: 26px; }
@@ -236,6 +286,147 @@
   .login-logo .login-sub { font-size: 8.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(200,168,122,0.45); margin-top: 5px; }
 
   .hide { display: none !important; }
+
+  /* ── Início ───────────────────────────────────────────────────────── */
+  .hero-greet { margin-bottom: 16px; }
+  .hero-greet .hi { font-family: var(--font-serif); font-size: 21px; color: var(--text); }
+  .hero-greet .sub { font-size: 11.5px; color: rgba(200,168,122,0.55); margin-top: 3px; }
+  .profile-mini { display: flex; align-items: center; gap: 14px; }
+  .profile-mini .av {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(200,168,122,0.28), rgba(200,168,122,0.08)) center/cover;
+    border: 1px solid rgba(200,168,122,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 19px; color: #E8D0A0;
+  }
+  .profile-mini .info { flex: 1; min-width: 0; }
+  .profile-mini .name { font-family: var(--font-serif); font-size: 16px; color: var(--text); }
+  .profile-mini .lvl { font-size: 10.5px; color: rgba(200,168,122,0.6); margin-top: 3px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .stat-card {
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(200,168,122,0.12); border-radius: var(--r);
+    padding: 14px; text-align: center; animation: card-in 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+  .stat-card .num { font-family: var(--font-serif); font-size: 22px; color: #E8D0A0; }
+  .stat-card .lbl { font-size: 9px; letter-spacing: 0.6px; text-transform: uppercase; color: rgba(240,232,220,0.45); margin-top: 4px; }
+
+  .quick-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .quick-actions .btn { margin-top: 0; }
+
+  .good-news-card .gn-tag { font-size: 9px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--sage-soft); margin-bottom: 8px; }
+  .good-news-card h3 { font-family: var(--font-serif); font-size: 15.5px; font-weight: normal; color: var(--text); line-height: 1.4; margin-bottom: 8px; }
+  .good-news-card p { font-size: 12px; color: rgba(240,232,220,0.55); line-height: 1.55; }
+
+  /* ── Controle segmentado (Enviar vídeo: TikTok / Instagram) ─────────── */
+  .seg-control {
+    display: flex; background: rgba(0,0,0,0.3); border: 1px solid rgba(200,168,122,0.15);
+    border-radius: var(--r-pill); padding: 3px; margin-bottom: 14px;
+  }
+  .seg-btn {
+    flex: 1; text-align: center; padding: 9px 0; border-radius: var(--r-pill);
+    font-size: 12.5px; font-weight: 600; color: rgba(240,232,220,0.5); cursor: pointer;
+    transition: all 0.25s var(--ease); background: transparent; border: none; font-family: var(--font-sans);
+  }
+  .seg-btn.active { background: linear-gradient(135deg,#C8A87A,#A08050); color: #1A0A02; box-shadow: 0 4px 14px -4px rgba(200,168,122,0.5); }
+
+  /* ── Repostagem ───────────────────────────────────────────────────── */
+  .rp-item {
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(200,168,122,0.12); border-radius: var(--r);
+    padding: 14px 16px; margin-bottom: 11px; animation: card-in 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+  .rp-item .rp-link { font-size: 10.5px; color: rgba(200,168,122,0.55); word-break: break-all; }
+  .rp-item .rp-product { font-family: var(--font-serif); font-size: 14.5px; color: var(--text); margin: 6px 0 4px; }
+  .rp-item .rp-coupon { font-size: 11px; color: var(--gold); }
+  .rp-item .rp-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+  .rp-badge { font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-pill); border: 1px solid; }
+  .rp-item .rp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; }
+  .rp-item .rp-date { font-size: 10.5px; color: rgba(240,232,220,0.35); }
+  .rp-mark { background: none; border: 1px solid rgba(200,168,122,0.25); color: #E8D0A0; font-size: 11px; padding: 5px 12px; border-radius: var(--r-pill); cursor: pointer; font-family: var(--font-sans); white-space: nowrap; }
+
+  /* ── Comunidade ───────────────────────────────────────────────────── */
+  .pill-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .pill-row .pill {
+    flex: 1; text-align: center; padding: 9px 0; border-radius: var(--r-pill);
+    font-size: 11.5px; font-weight: 600; color: rgba(240,232,220,0.5);
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(200,168,122,0.12);
+    cursor: pointer; transition: all 0.2s var(--ease);
+  }
+  .pill-row .pill.active { background: rgba(200,168,122,0.14); color: #E8D0A0; border-color: rgba(200,168,122,0.35); }
+
+  .chat-box { max-height: 52vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
+  .chat-msg { display: flex; gap: 9px; animation: msg-in 0.3s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes msg-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .chat-msg .av {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(200,168,122,0.28), rgba(200,168,122,0.08)) center/cover;
+    border: 1px solid rgba(200,168,122,0.3);
+    display: flex; align-items: center; justify-content: center; font-size: 10.5px; color: #E8D0A0;
+  }
+  .chat-msg .bubble { background: rgba(0,0,0,0.25); border: 1px solid rgba(200,168,122,0.1); border-radius: var(--r-sm); padding: 8px 12px; max-width: 78%; }
+  .chat-msg.mine { flex-direction: row-reverse; }
+  .chat-msg.mine .bubble { background: rgba(200,168,122,0.14); border-color: rgba(200,168,122,0.3); }
+  .chat-msg .nm { font-size: 10px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+  .chat-msg .tx { font-size: 12.5px; color: var(--text); line-height: 1.45; }
+  .chat-msg .tm { font-size: 9px; color: rgba(240,232,220,0.3); margin-top: 3px; }
+  .chat-input-row { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
+  .chat-input-row input { flex: 1; }
+  .chat-input-row button {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg,#C8A87A,#A08050); border: none; color: #1A0A02; font-size: 16px; cursor: pointer;
+  }
+
+  .forum-post {
+    background: rgba(0,0,0,0.22); border: 1px solid rgba(200,168,122,0.12); border-radius: var(--r);
+    padding: 15px 16px; margin-bottom: 12px; animation: card-in 0.35s cubic-bezier(.22,1,.36,1) both;
+  }
+  .forum-post .fp-head { display: flex; align-items: center; gap: 9px; }
+  .forum-post .fp-av {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(200,168,122,0.28), rgba(200,168,122,0.08)) center/cover;
+    border: 1px solid rgba(200,168,122,0.3);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; color: #E8D0A0;
+  }
+  .forum-post .fp-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .forum-post .fp-cat { font-size: 9px; color: rgba(200,168,122,0.55); text-transform: uppercase; letter-spacing: 0.6px; }
+  .forum-post .fp-text { font-size: 13px; color: rgba(240,232,220,0.8); line-height: 1.55; margin: 10px 0; }
+  .forum-post .fp-actions { display: flex; gap: 16px; align-items: center; }
+  .fp-like, .fp-reply-btn, .fp-del { background: none; border: none; color: rgba(240,232,220,0.45); font-size: 11.5px; cursor: pointer; font-family: var(--font-sans); display: flex; align-items: center; gap: 5px; }
+  .fp-like.liked { color: var(--danger-soft); }
+  .fp-replies { margin-top: 12px; padding-left: 14px; border-left: 1px solid rgba(200,168,122,0.12); display: flex; flex-direction: column; gap: 9px; }
+  .fp-reply { font-size: 12px; color: rgba(240,232,220,0.65); }
+  .fp-reply .nm { color: var(--gold); font-weight: 600; margin-right: 5px; }
+  .fp-reply-form { display: flex; gap: 8px; margin-top: 10px; }
+  .fp-reply-form input { flex: 1; padding: 8px 12px; font-size: 12px; }
+  .fp-reply-form button { width: auto; margin: 0; padding: 8px 16px; }
+
+  /* ── Perfil ───────────────────────────────────────────────────────── */
+  .perfil-back-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+  .perfil-back-row button {
+    background: none; border: none; color: rgba(200,168,122,0.7); font-size: 14px; cursor: pointer;
+    padding: 6px 6px 6px 0; font-family: var(--font-sans);
+  }
+  .perfil-back-row h2 { font-family: var(--font-serif); font-size: 16px; color: var(--text); font-weight: normal; }
+  .avatar-upload { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
+  .avatar-upload .av-big {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(200,168,122,0.28), rgba(200,168,122,0.08)) center/cover;
+    border: 1.5px solid rgba(200,168,122,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 28px; color: #E8D0A0;
+    position: relative; cursor: pointer;
+  }
+  .avatar-upload .av-badge {
+    position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; border-radius: 50%;
+    background: #C8A87A; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #1A0A02; border: 2px solid var(--bg);
+  }
+  .avatar-upload input[type="file"] { display: none; }
+  .char-count { font-size: 10px; color: rgba(200,168,122,0.4); text-align: right; margin-top: 4px; }
+  .perfil-stats { display: flex; gap: 10px; margin: 18px 0; }
+  .perfil-stats .ps { flex: 1; text-align: center; background: rgba(0,0,0,0.2); border: 1px solid rgba(200,168,122,0.1); border-radius: var(--r-sm); padding: 10px 6px; }
+  .perfil-stats .ps .n { font-family: var(--font-serif); font-size: 16px; color: #E8D0A0; }
+  .perfil-stats .ps .l { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.5px; color: rgba(240,232,220,0.4); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -268,16 +459,51 @@
       <div class="brand-text">
         <span class="brand-name">Gaia Creator</span>
         <span class="brand-sub">Controle Remoto</span>
-        <span class="user-email" id="user-email-label"></span>
       </div>
     </div>
-    <button class="logout-btn" id="btn-logout">Sair</button>
+    <button class="header-avatar-btn" id="btn-open-perfil" aria-label="Abrir perfil">
+      <span class="header-avatar-ring"></span>
+      <span class="header-avatar-img" id="header-avatar-img">✦</span>
+    </button>
   </header>
 
   <div class="wrap">
 
+    <!-- ---------- INÍCIO ---------- -->
+    <section id="view-inicio" class="view active">
+      <div class="hero-greet">
+        <div class="hi" id="inicio-greet">Oi!</div>
+        <div class="sub">Aqui está o resumo do seu Gaia Creator agora.</div>
+      </div>
+      <div class="card">
+        <div class="profile-mini">
+          <div class="av" id="inicio-av">✦</div>
+          <div class="info">
+            <div class="name" id="inicio-name">—</div>
+            <div class="lvl" id="inicio-level">—</div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="num" id="inicio-stat-fila">—</div><div class="lbl">Na fila</div></div>
+          <div class="stat-card"><div class="num" id="inicio-stat-postados">—</div><div class="lbl">Publicados</div></div>
+          <div class="stat-card"><div class="num" id="inicio-stat-tiktok">—</div><div class="lbl">Contas TikTok</div></div>
+          <div class="stat-card"><div class="num" id="inicio-stat-ig">—</div><div class="lbl">Instagram</div></div>
+        </div>
+        <div class="quick-actions">
+          <button type="button" class="btn btn-primary" id="inicio-quick-enviar">Enviar vídeo</button>
+          <button type="button" class="btn btn-ghost" id="inicio-quick-fila">Ver fila</button>
+        </div>
+      </div>
+      <div class="card good-news-card hide" id="inicio-news-card">
+        <div class="gn-tag">✦ Seu dia mais feliz</div>
+        <h3 id="inicio-news-title"></h3>
+        <p id="inicio-news-desc"></p>
+        <a class="btn btn-ghost" id="inicio-news-link" href="#" target="_blank" rel="noopener" style="text-decoration:none; text-align:center; display:block;">Acessar matéria completa</a>
+      </div>
+    </section>
+
     <!-- ---------- FILA ---------- -->
-    <section id="view-fila" class="view active">
+    <section id="view-fila" class="view">
       <div class="refresh-row">
         <button class="refresh-btn" id="btn-refresh-fila"><span id="fila-refresh-ic">↻</span> atualizar</button>
       </div>
@@ -346,12 +572,136 @@
       </div>
     </section>
 
+    <!-- ---------- ENVIAR VÍDEO PRA FILA (em breve — servidor ainda não recebe
+         vídeo pra fila de edição local, ver comentário na secão JS) ---------- -->
+    <section id="view-enviar" class="view">
+      <div class="card soon-card">
+        <div class="soon-icon">⇧</div>
+        <h1 class="title">Enviar vídeo pra fila</h1>
+        <p class="body-text">Em breve você vai poder mandar um vídeo novo direto do celular pra Fila de Edição do seu computador — sem precisar estar na mesma wifi.</p>
+        <p class="caption">Por enquanto, a Fila de Edição só recebe vídeo direto no PC. Essa tela já tá reservada pra quando isso for pro ar — sem enrolação, sem fingir que já funciona.</p>
+      </div>
+    </section>
+
+    <!-- ---------- REPOSTAGEM ---------- -->
+    <section id="view-repostagem" class="view">
+      <div class="card">
+        <h2 class="eyebrow">Adicionar à Repostagem</h2>
+        <form id="form-repost">
+          <label class="field-label">Link do TikTok</label>
+          <input class="field-input" id="rp-link" type="url" placeholder="https://www.tiktok.com/..." required />
+
+          <label class="field-label">Produto</label>
+          <input class="field-input" id="rp-product" type="text" placeholder="Nome do produto" />
+
+          <label class="field-label">Cupom</label>
+          <input class="field-input" id="rp-coupon" type="text" placeholder="Código do cupom" />
+
+          <button class="btn btn-primary" type="submit" id="rp-submit">Salvar na Repostagem</button>
+        </form>
+        <div id="rp-msg" class="msg"></div>
+      </div>
+      <div class="refresh-row">
+        <button class="refresh-btn" id="btn-refresh-repost"><span id="rp-refresh-ic">↻</span> atualizar</button>
+      </div>
+      <div id="rp-list"></div>
+    </section>
+
+    <!-- ---------- COMUNIDADE ---------- -->
+    <section id="view-comunidade" class="view">
+      <div class="pill-row">
+        <div class="pill active" id="com-pill-chat">Chat</div>
+        <div class="pill" id="com-pill-forum">Fórum</div>
+        <div class="pill" id="com-pill-news">Notícia</div>
+      </div>
+
+      <div id="com-sub-chat">
+        <div class="card">
+          <div class="chat-box" id="chat-box"></div>
+          <div class="chat-input-row">
+            <input class="field-input" id="chat-input" type="text" placeholder="Escreva algo pra Comunidade…" maxlength="500" />
+            <button type="button" id="chat-send" aria-label="Enviar">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="com-sub-forum" class="hide">
+        <div class="card">
+          <h2 class="eyebrow">Publicar no Fórum</h2>
+          <form id="form-forum">
+            <label class="field-label">Categoria</label>
+            <select class="field-input" id="forum-category">
+              <option value="mensagem">Mensagem</option>
+              <option value="ideia">Ideia</option>
+              <option value="duvida">Dúvida</option>
+            </select>
+            <label class="field-label">O que você quer compartilhar?</label>
+            <textarea class="field-input" id="forum-text" placeholder="Escreva aqui…"></textarea>
+            <button class="btn btn-primary" type="submit" id="forum-submit">Publicar</button>
+          </form>
+          <div id="forum-msg" class="msg"></div>
+        </div>
+        <div id="forum-list"></div>
+      </div>
+
+      <div id="com-sub-news" class="hide">
+        <div class="card good-news-card" id="com-news-card">
+          <div class="gn-tag">✦ Seu dia mais feliz</div>
+          <h3 id="com-news-title">Carregando…</h3>
+          <p id="com-news-desc"></p>
+          <a class="btn btn-ghost" id="com-news-link" href="#" target="_blank" rel="noopener" style="text-decoration:none; text-align:center; display:block;">Acessar matéria completa</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PERFIL (via avatar no cabeçalho, fora da tabbar) ---------- -->
+    <section id="view-perfil" class="view">
+      <div class="perfil-back-row">
+        <button type="button" id="btn-perfil-back">← Voltar</button>
+        <h2>Perfil</h2>
+      </div>
+      <div class="card">
+        <div class="avatar-upload">
+          <label class="av-big" id="perfil-av-big" for="perfil-av-input">
+            <span id="perfil-av-txt">✦</span>
+            <span class="av-badge">✎</span>
+          </label>
+          <input type="file" id="perfil-av-input" accept="image/*" />
+        </div>
+        <label class="field-label">Nome</label>
+        <input class="field-input" id="perfil-name" type="text" placeholder="Seu nome" maxlength="60" />
+
+        <label class="field-label">Instagram (@)</label>
+        <input class="field-input" id="perfil-ig" type="text" placeholder="seu.usuario" />
+
+        <label class="field-label">Bio</label>
+        <textarea class="field-input" id="perfil-bio" maxlength="140" placeholder="Fale um pouco sobre você…"></textarea>
+        <div class="char-count"><span id="perfil-bio-count">0</span>/140</div>
+
+        <div class="perfil-stats">
+          <div class="ps"><div class="n" id="perfil-stat-videos">0</div><div class="l">Vídeos</div></div>
+          <div class="ps"><div class="n" id="perfil-stat-level">Aprendiz</div><div class="l">Nível</div></div>
+          <div class="ps"><div class="n" id="perfil-stat-followers">0</div><div class="l">Seguidores</div></div>
+        </div>
+
+        <button class="btn btn-primary" type="button" id="perfil-save">Salvar perfil</button>
+        <div id="perfil-msg" class="msg"></div>
+        <p class="body-text" id="perfil-email" style="margin-top:14px; text-align:center;"></p>
+        <button class="btn btn-ghost" type="button" id="btn-logout">Sair da conta</button>
+      </div>
+    </section>
+
   </div>
 
   <nav class="tabbar">
-    <button data-view="fila" class="tab-btn active"><span class="ic">⊟</span>Fila</button>
+    <div class="tab-indicator" id="tab-indicator"></div>
+    <button data-view="inicio" class="tab-btn active"><span class="ic">⌂</span>Início</button>
+    <button data-view="fila" class="tab-btn"><span class="ic">⊟</span>Fila</button>
     <button data-view="tiktok" class="tab-btn"><span class="ic">◷</span>TikTok</button>
     <button data-view="instagram" class="tab-btn"><span class="ic">⟳</span>Instagram</button>
+    <button data-view="enviar" class="tab-btn"><span class="ic">⇧</span>Enviar</button>
+    <button data-view="repostagem" class="tab-btn"><span class="ic">⟲</span>Repostar</button>
+    <button data-view="comunidade" class="tab-btn"><span class="ic">◈</span>Comunidade</button>
   </nav>
 </div>
 
@@ -420,9 +770,41 @@
     });
   }
 
+  function escapeHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
+
+  function fmtWhen(iso) {
+    try {
+      var d = new Date(iso);
+      return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return iso; }
+  }
+
+  function fmtTime(iso) {
+    try { return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
+  }
+
+  // Iniciais pra avatar sem foto — usa nome (2 palavras) ou, na falta
+  // dele, a parte antes do @ do e-mail.
+  function initials(s) {
+    s = String(s || '').trim();
+    if (!s) return '?';
+    if (s.indexOf('@') > 0 && s.indexOf(' ') === -1) s = s.slice(0, s.indexOf('@'));
+    var parts = s.split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
   // ---------------------------------------------------------------------
   // Navegação entre telas
   // ---------------------------------------------------------------------
+  var currentProfile = null;
+  var currentTab = 'inicio';
+
   function showLogin(msg) {
     document.getElementById('app').classList.add('hide');
     document.getElementById('view-login').style.display = 'flex';
@@ -436,8 +818,33 @@
     document.getElementById('view-login').style.display = 'none';
     document.getElementById('app').classList.remove('hide');
     var auth = getAuth();
-    document.getElementById('user-email-label').textContent = (auth && auth.email) || '';
+    var emailEl = document.getElementById('perfil-email');
+    if (emailEl) emailEl.textContent = (auth && auth.email) || '';
   }
+
+  function updateHeaderAvatar(profile) {
+    var el = document.getElementById('header-avatar-img');
+    if (!el) return;
+    var auth = getAuth();
+    if (profile && profile.avatarDataUrl) {
+      el.style.backgroundImage = 'url(' + profile.avatarDataUrl + ')';
+      el.textContent = '';
+    } else {
+      el.style.backgroundImage = '';
+      el.textContent = initials((profile && profile.name) || (auth && auth.email));
+    }
+  }
+
+  function updateTabIndicator(btn) {
+    var ind = document.getElementById('tab-indicator');
+    if (!ind || !btn) return;
+    ind.style.left = (btn.offsetLeft + 10) + 'px';
+    ind.style.width = (btn.offsetWidth - 20) + 'px';
+  }
+  window.addEventListener('resize', function () {
+    var activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn) updateTabIndicator(activeBtn);
+  });
 
   function switchTab(name) {
     document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
@@ -445,14 +852,35 @@
     document.querySelectorAll('.tab-btn').forEach(function (b) {
       b.classList.toggle('active', b.getAttribute('data-view') === name);
     });
+    currentTab = name;
+    var activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn) {
+      updateTabIndicator(activeBtn);
+      activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+    if (name === 'inicio') loadInicio();
     if (name === 'fila') loadFila();
     if (name === 'tiktok') loadTikTokTab();
     if (name === 'instagram') loadInstagramTab();
+    if (name === 'enviar') loadEnviarTab();
+    if (name === 'repostagem') loadRepostagem();
+    if (name === 'comunidade') loadComunidade();
   }
 
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-view')); });
   });
+
+  // Perfil vive fora da tabbar — abre por cima da aba atual e volta pra
+  // ela ao fechar (currentTab guarda qual era a aba de baixo ativa).
+  function openPerfil() {
+    document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+    document.getElementById('view-perfil').classList.add('active');
+    loadPerfil();
+  }
+  function closePerfil() { switchTab(currentTab); }
+  document.getElementById('btn-open-perfil').addEventListener('click', openPerfil);
+  document.getElementById('btn-perfil-back').addEventListener('click', closePerfil);
 
   // ---------------------------------------------------------------------
   // Login
@@ -479,7 +907,7 @@
       }
       setAuth({ token: data.token, email: data.email, name: data.name });
       showApp();
-      switchTab('fila');
+      switchTab('inicio');
     } catch (err) {
       msgEl.textContent = 'Erro de conexão. Tenta de novo em alguns segundos.';
       msgEl.className = 'msg erro';
@@ -494,6 +922,63 @@
   });
 
   // ---------------------------------------------------------------------
+  // Início — resumo (perfil, contagens, notícia do dia)
+  // ---------------------------------------------------------------------
+  function greetPrefix() {
+    var h = new Date().getHours();
+    if (h < 12) return 'Bom dia';
+    if (h < 18) return 'Boa tarde';
+    return 'Boa noite';
+  }
+
+  async function loadInicio() {
+    var auth = getAuth();
+    document.getElementById('inicio-greet').textContent = greetPrefix() + '!';
+    try {
+      var results = await Promise.all([
+        api('/api/community/profile').catch(function () { return null; }),
+        api('/api/tiktok/accounts').catch(function () { return []; }),
+        api('/api/instagram/status').catch(function () { return { connected: false }; }),
+        api('/api/tiktok/scheduled').catch(function () { return []; }),
+        api('/api/instagram/scheduled').catch(function () { return []; }),
+        api('/api/community/good-news').catch(function () { return null; }),
+      ]);
+      var profile = results[0], ttAccounts = results[1] || [], igStatus = results[2] || {};
+      var ttSched = results[3] || [], igSched = results[4] || [], news = results[5];
+
+      if (profile) { currentProfile = profile; updateHeaderAvatar(profile); }
+      var displayName = (profile && profile.name) || (auth && auth.email) || 'Creator';
+      document.getElementById('inicio-greet').textContent = greetPrefix() + (profile && profile.name ? ', ' + profile.name.split(' ')[0] : '') + '!';
+      document.getElementById('inicio-name').textContent = displayName;
+      document.getElementById('inicio-level').textContent =
+        ((profile && profile.levelName) || 'Aprendiz') + ' · ' + ((profile && profile.totalVideos) || 0) + 'v · ' + ((profile && profile.followerCount) || 0) + ' seg.';
+
+      var avEl = document.getElementById('inicio-av');
+      if (profile && profile.avatarDataUrl) { avEl.style.backgroundImage = 'url(' + profile.avatarDataUrl + ')'; avEl.textContent = ''; }
+      else { avEl.style.backgroundImage = ''; avEl.textContent = initials(displayName); }
+
+      var all = ttSched.concat(igSched);
+      var naFila = all.filter(function (i) { return i.status === 'scheduled' || i.status === 'awaiting_video' || i.status === 'posting'; }).length;
+      var postados = all.filter(function (i) { return i.status === 'posted'; }).length;
+      document.getElementById('inicio-stat-fila').textContent = naFila;
+      document.getElementById('inicio-stat-postados').textContent = postados;
+      document.getElementById('inicio-stat-tiktok').textContent = ttAccounts.length;
+      document.getElementById('inicio-stat-ig').textContent = igStatus.connected ? '✓' : '—';
+
+      if (news && news.item) {
+        var it = news.item;
+        document.getElementById('inicio-news-title').textContent = it.title || '';
+        document.getElementById('inicio-news-desc').textContent = it.description || '';
+        document.getElementById('inicio-news-link').href = it.link || '#';
+        document.getElementById('inicio-news-card').classList.remove('hide');
+      }
+    } catch (e) {}
+  }
+
+  document.getElementById('inicio-quick-enviar').addEventListener('click', function () { switchTab('enviar'); });
+  document.getElementById('inicio-quick-fila').addEventListener('click', function () { switchTab('fila'); });
+
+  // ---------------------------------------------------------------------
   // Fila (TikTok agendado + Instagram agendado, combinados) — mesmos
   // rótulos e cores do SCHEDULED_STATUS_LABEL do renderer.js do desktop,
   // pra ficar consistente entre as duas telas.
@@ -505,13 +990,6 @@
     posted:         { label: 'Publicado ✓',      color: '#6FBF73' },
     failed:         { label: 'Falhou',           color: '#D05848' },
   };
-
-  function fmtWhen(iso) {
-    try {
-      var d = new Date(iso);
-      return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    } catch (e) { return iso; }
-  }
 
   async function loadFila() {
     var listEl = document.getElementById('fila-list');
@@ -577,12 +1055,6 @@
     }
   }
   document.getElementById('btn-refresh-fila').addEventListener('click', loadFila);
-
-  function escapeHtml(s) {
-    var d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-  }
 
   // ---------------------------------------------------------------------
   // TikTok — status + agendar
@@ -724,12 +1196,413 @@
   });
 
   // ---------------------------------------------------------------------
+  // Enviar vídeo pra fila — tela "em breve" só, de propósito. O servidor
+  // (gaia-editor-server) não tem NENHUMA rota pra receber vídeo pra fila
+  // de edição local (a que roda com ffmpeg no PC) — confirmado direto no
+  // código-fonte real, não é chute. Simular isso reaproveitando as rotas
+  // de agendamento TikTok/Instagram seria enganoso (viraria um atalho
+  // redundante com as abas TikTok/Instagram, sem nenhuma ligação com a
+  // Fila de Edição de verdade). Por isso essa aba não chama fetch nenhum
+  // — é só a tela estática acima em #view-enviar. Nada a inicializar aqui.
+  function loadEnviarTab() {}
+
+  // ---------------------------------------------------------------------
+  // Repostagem — histórico sincronizado (GET/PUT /api/repost/history).
+  // O download/publicação de verdade só rola no PC (yt-dlp etc.); daqui
+  // dá pra guardar um link novo pra depois, e marcar manualmente que já
+  // foi publicado quando isso acontecer fora do fluxo automático.
+  // ---------------------------------------------------------------------
+  var RP_DL_LABEL = {
+    pendente: { l: 'Pendente', c: 'rgba(240,232,220,0.4)' },
+    baixando: { l: 'Baixando', c: '#C8A87A' },
+    feito:    { l: 'Baixado',  c: '#8FD9A8' },
+    erro:     { l: 'Falhou',   c: '#E08A7A' },
+  };
+  var RP_PUB_LABEL = {
+    agendado:   { l: 'Agendado',      c: '#C8A87A' },
+    publicando: { l: 'Publicando',    c: '#7AA0C8' },
+    feito:      { l: 'Publicado ✓',   c: '#8FD9A8' },
+    erro:       { l: 'Falhou',        c: '#E08A7A' },
+  };
+
+  async function loadRepostagem() {
+    var listEl = document.getElementById('rp-list');
+    var icEl = document.getElementById('rp-refresh-ic');
+    icEl.classList.add('spin');
+    try {
+      var res = await api('/api/repost/history');
+      var items = (res && res.items) || [];
+      items.sort(function (a, b) { return new Date(b.doneAt || 0) - new Date(a.doneAt || 0); });
+      if (!items.length) {
+        listEl.innerHTML = '<div class="empty-state"><div class="big">✦</div>Nada salvo na Repostagem ainda.<br/>Use o formulário acima pra guardar um link.</div>';
+      } else {
+        listEl.innerHTML = '';
+        items.forEach(function (it) {
+          var div = document.createElement('div');
+          div.className = 'rp-item';
+          var dl = RP_DL_LABEL[it.dlStatus] || null;
+          var pub = RP_PUB_LABEL[it.pubStatus] || null;
+          var badges = '';
+          if (dl) badges += '<span class="rp-badge" style="color:' + dl.c + ';border-color:' + dl.c + '66">' + dl.l + '</span>';
+          if (pub) badges += '<span class="rp-badge" style="color:' + pub.c + ';border-color:' + pub.c + '66">' + pub.l + '</span>';
+          div.innerHTML =
+            '<div class="rp-link">' + escapeHtml(it.tiktokLink || '') + '</div>' +
+            '<div class="rp-product">' + escapeHtml(it.productName || 'Sem nome de produto') + '</div>' +
+            (it.coupon ? '<div class="rp-coupon">Cupom: ' + escapeHtml(it.coupon) + '</div>' : '') +
+            '<div class="rp-badges">' + badges + '</div>' +
+            '<div class="rp-foot">' +
+              '<span class="rp-date">' + (it.doneAt ? fmtWhen(it.doneAt) : 'sem data') + '</span>' +
+              '<button type="button" class="rp-mark" data-link="' + encodeURIComponent(it.tiktokLink || '') + '" data-current="' + (it.pubStatus || '') + '">' +
+                (it.pubStatus === 'feito' ? '↺ desmarcar' : '✓ marcar publicado') +
+              '</button>' +
+            '</div>';
+          listEl.appendChild(div);
+        });
+        listEl.querySelectorAll('.rp-mark').forEach(function (btn) {
+          btn.addEventListener('click', async function () {
+            var link = decodeURIComponent(btn.getAttribute('data-link'));
+            var isDone = btn.getAttribute('data-current') === 'feito';
+            btn.disabled = true; btn.textContent = 'salvando…';
+            try {
+              await api('/api/repost/history', {
+                method: 'PUT',
+                body: JSON.stringify({ tiktokLink: link, pubStatus: isDone ? null : 'feito', doneAt: isDone ? null : new Date().toISOString() }),
+              });
+              loadRepostagem();
+            } catch (e) {
+              btn.disabled = false; btn.textContent = 'erro, tenta de novo';
+            }
+          });
+        });
+      }
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty-state">Não deu pra carregar agora.<br/>' + escapeHtml(e.message || '') + '</div>';
+    } finally {
+      icEl.classList.remove('spin');
+    }
+  }
+  document.getElementById('btn-refresh-repost').addEventListener('click', loadRepostagem);
+
+  document.getElementById('form-repost').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('rp-submit');
+    var msgEl = document.getElementById('rp-msg');
+    msgEl.textContent = ''; msgEl.className = 'msg';
+    var link = document.getElementById('rp-link').value.trim();
+    if (!link) { msgEl.textContent = 'Cole o link do TikTok.'; msgEl.className = 'msg erro'; return; }
+    var product = document.getElementById('rp-product').value.trim();
+    var coupon = document.getElementById('rp-coupon').value.trim();
+    btn.disabled = true; btn.textContent = 'Salvando…';
+    try {
+      await api('/api/repost/history', {
+        method: 'PUT',
+        body: JSON.stringify({ tiktokLink: link, productName: product || undefined, coupon: coupon || undefined }),
+      });
+      msgEl.textContent = 'Salvo na Repostagem!';
+      msgEl.className = 'msg ok';
+      document.getElementById('form-repost').reset();
+      loadRepostagem();
+    } catch (err) {
+      msgEl.textContent = err.message || 'Não deu pra salvar.';
+      msgEl.className = 'msg erro';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Salvar na Repostagem';
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // Comunidade — Chat (tempo real via WebSocket /ws/chat), Fórum e
+  // Notícia do dia. Sub-abas em pills dentro da mesma view.
+  // ---------------------------------------------------------------------
+  function setComSub(name) {
+    ['chat', 'forum', 'news'].forEach(function (s) {
+      document.getElementById('com-pill-' + s).classList.toggle('active', s === name);
+      document.getElementById('com-sub-' + s).classList.toggle('hide', s !== name);
+    });
+    if (name === 'chat') { loadChatHistory(); ensureChatSocket(); }
+    if (name === 'forum') loadForum();
+    if (name === 'news') loadComNews();
+  }
+  document.getElementById('com-pill-chat').addEventListener('click', function () { setComSub('chat'); });
+  document.getElementById('com-pill-forum').addEventListener('click', function () { setComSub('forum'); });
+  document.getElementById('com-pill-news').addEventListener('click', function () { setComSub('news'); });
+  function loadComunidade() { setComSub('chat'); }
+
+  // -- Chat --
+  var chatSocket = null;
+
+  function renderChatMessage(m) {
+    var box = document.getElementById('chat-box');
+    var mine = !!(currentProfile && m.author && m.author.creatorId === currentProfile.creatorId);
+    var div = document.createElement('div');
+    div.className = 'chat-msg' + (mine ? ' mine' : '');
+    var hasAv = m.author && m.author.avatarDataUrl;
+    var avStyle = hasAv ? ' style="background-image:url(' + m.author.avatarDataUrl + ')"' : '';
+    div.innerHTML =
+      '<div class="av"' + avStyle + '>' + (hasAv ? '' : initials(m.author && m.author.name)) + '</div>' +
+      '<div class="bubble"><div class="nm">' + escapeHtml((m.author && m.author.name) || 'Creator') + '</div>' +
+      '<div class="tx">' + escapeHtml(m.text || '') + '</div>' +
+      '<div class="tm">' + fmtTime(m.createdAt) + '</div></div>';
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function loadChatHistory() {
+    var box = document.getElementById('chat-box');
+    box.innerHTML = '';
+    try {
+      var res = await api('/api/chat/messages');
+      (res.items || []).forEach(renderChatMessage);
+    } catch (e) {}
+  }
+
+  function ensureChatSocket() {
+    if (chatSocket && (chatSocket.readyState === 0 || chatSocket.readyState === 1)) return;
+    var auth = getAuth();
+    if (!auth || !auth.token) return;
+    var wsUrl = API.replace(/^http/, 'ws') + '/ws/chat?token=' + encodeURIComponent(auth.token);
+    try {
+      chatSocket = new WebSocket(wsUrl);
+      chatSocket.onmessage = function (ev) {
+        try {
+          var data = JSON.parse(ev.data);
+          if (data.type === 'message') renderChatMessage(data.message);
+        } catch (e) {}
+      };
+    } catch (e) {}
+  }
+
+  function sendChat() {
+    var input = document.getElementById('chat-input');
+    var text = input.value.trim();
+    if (!text) return;
+    if (chatSocket && chatSocket.readyState === 1) {
+      chatSocket.send(JSON.stringify({ type: 'send', text: text }));
+      input.value = '';
+    } else {
+      ensureChatSocket();
+    }
+  }
+  document.getElementById('chat-send').addEventListener('click', sendChat);
+  document.getElementById('chat-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
+  });
+
+  // -- Fórum --
+  var FORUM_CAT_LABEL = { mensagem: 'Mensagem', ideia: 'Ideia', duvida: 'Dúvida' };
+
+  function renderForumPost(p) {
+    var div = document.createElement('div');
+    div.className = 'forum-post';
+    var hasAv = p.author && p.author.avatarDataUrl;
+    var avStyle = hasAv ? ' style="background-image:url(' + p.author.avatarDataUrl + ')"' : '';
+    var repliesHtml = (p.replies || []).map(function (r) {
+      return '<div class="fp-reply"><span class="nm">' + escapeHtml((r.author && r.author.name) || 'Creator') + '</span>' + escapeHtml(r.text) + '</div>';
+    }).join('');
+    div.innerHTML =
+      '<div class="fp-head"><div class="fp-av"' + avStyle + '>' + (hasAv ? '' : initials(p.author && p.author.name)) + '</div>' +
+        '<div><div class="fp-name">' + escapeHtml((p.author && p.author.name) || 'Creator') + '</div>' +
+        '<div class="fp-cat">' + (FORUM_CAT_LABEL[p.category] || p.category) + ' · ' + fmtWhen(p.createdAt) + '</div></div></div>' +
+      '<div class="fp-text">' + escapeHtml(p.text) + '</div>' +
+      '<div class="fp-actions">' +
+        '<button type="button" class="fp-like' + (p.likedByMe ? ' liked' : '') + '">♥ ' + p.likeCount + '</button>' +
+        '<button type="button" class="fp-reply-btn">responder</button>' +
+        (p.isMine ? '<button type="button" class="fp-del">apagar</button>' : '') +
+      '</div>' +
+      (repliesHtml ? '<div class="fp-replies">' + repliesHtml + '</div>' : '') +
+      '<div class="fp-reply-form hide"><input class="field-input" type="text" placeholder="Responder…" maxlength="500" /><button type="button" class="btn btn-ghost">Enviar</button></div>';
+
+    div.querySelector('.fp-like').addEventListener('click', async function () {
+      try { await api('/api/forum/posts/' + p.id + '/like', { method: 'POST' }); loadForum(); } catch (e) {}
+    });
+    var replyFormEl = div.querySelector('.fp-reply-form');
+    div.querySelector('.fp-reply-btn').addEventListener('click', function () { replyFormEl.classList.toggle('hide'); });
+    replyFormEl.querySelector('button').addEventListener('click', async function () {
+      var input = replyFormEl.querySelector('input');
+      var text = input.value.trim();
+      if (!text) return;
+      try {
+        await api('/api/forum/posts/' + p.id + '/reply', { method: 'POST', body: JSON.stringify({ text: text }) });
+        loadForum();
+      } catch (e) {}
+    });
+    if (p.isMine) {
+      div.querySelector('.fp-del').addEventListener('click', async function () {
+        if (!confirm('Apagar esse post?')) return;
+        try { await api('/api/forum/posts/' + p.id, { method: 'DELETE' }); loadForum(); } catch (e) {}
+      });
+    }
+    return div;
+  }
+
+  async function loadForum() {
+    var listEl = document.getElementById('forum-list');
+    listEl.innerHTML = '<div class="empty-state">Carregando…</div>';
+    try {
+      var res = await api('/api/forum/posts');
+      var items = res.items || [];
+      if (!items.length) {
+        listEl.innerHTML = '<div class="empty-state"><div class="big">✦</div>Ainda não tem nada no Fórum.<br/>Seja o primeiro a publicar.</div>';
+        return;
+      }
+      listEl.innerHTML = '';
+      items.forEach(function (p) { listEl.appendChild(renderForumPost(p)); });
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty-state">Não deu pra carregar o Fórum agora.</div>';
+    }
+  }
+
+  document.getElementById('form-forum').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = document.getElementById('forum-submit');
+    var msgEl = document.getElementById('forum-msg');
+    msgEl.textContent = ''; msgEl.className = 'msg';
+    var category = document.getElementById('forum-category').value;
+    var text = document.getElementById('forum-text').value.trim();
+    if (!text) { msgEl.textContent = 'Escreva algo antes de publicar.'; msgEl.className = 'msg erro'; return; }
+    btn.disabled = true; btn.textContent = 'Publicando…';
+    try {
+      await api('/api/forum/posts', { method: 'POST', body: JSON.stringify({ category: category, text: text }) });
+      msgEl.textContent = 'Publicado!';
+      msgEl.className = 'msg ok';
+      document.getElementById('form-forum').reset();
+      loadForum();
+    } catch (err) {
+      msgEl.textContent = err.message || 'Não deu pra publicar.';
+      msgEl.className = 'msg erro';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Publicar';
+    }
+  });
+
+  // -- Notícia do dia (dentro da Comunidade) --
+  async function loadComNews() {
+    try {
+      var res = await api('/api/community/good-news');
+      var it = res && res.item;
+      if (!it) {
+        document.getElementById('com-news-title').textContent = 'Sem notícia disponível agora.';
+        document.getElementById('com-news-desc').textContent = '';
+        return;
+      }
+      document.getElementById('com-news-title').textContent = it.title || '';
+      document.getElementById('com-news-desc').textContent = it.description || '';
+      document.getElementById('com-news-link').href = it.link || '#';
+    } catch (e) {
+      document.getElementById('com-news-title').textContent = 'Não deu pra carregar agora.';
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Perfil — editável (nome, @, bio, avatar); nível e total de vídeos
+  // ficam só como leitura (são calculados pelo Gaia Editor no PC).
+  // ---------------------------------------------------------------------
+  var perfilAvatarDataUrl = null;
+
+  function updatePerfilAvatarPreview() {
+    var el = document.getElementById('perfil-av-big');
+    var txt = document.getElementById('perfil-av-txt');
+    if (perfilAvatarDataUrl) { el.style.backgroundImage = 'url(' + perfilAvatarDataUrl + ')'; txt.textContent = ''; }
+    else {
+      el.style.backgroundImage = '';
+      var auth = getAuth();
+      txt.textContent = initials(document.getElementById('perfil-name').value || (auth && auth.email));
+    }
+  }
+
+  async function loadPerfil() {
+    var auth = getAuth();
+    var emailEl = document.getElementById('perfil-email');
+    if (emailEl) emailEl.textContent = (auth && auth.email) || '';
+    try {
+      var profile = await api('/api/community/profile');
+      currentProfile = profile;
+      document.getElementById('perfil-name').value = profile.name || '';
+      document.getElementById('perfil-ig').value = profile.instagramHandle || '';
+      document.getElementById('perfil-bio').value = profile.bio || '';
+      document.getElementById('perfil-bio-count').textContent = (profile.bio || '').length;
+      document.getElementById('perfil-stat-videos').textContent = profile.totalVideos || 0;
+      document.getElementById('perfil-stat-level').textContent = profile.levelName || 'Aprendiz';
+      document.getElementById('perfil-stat-followers').textContent = profile.followerCount || 0;
+      perfilAvatarDataUrl = profile.avatarDataUrl || null;
+      updatePerfilAvatarPreview();
+      updateHeaderAvatar(profile);
+    } catch (e) {}
+  }
+
+  document.getElementById('perfil-bio').addEventListener('input', function () {
+    document.getElementById('perfil-bio-count').textContent = this.value.length;
+  });
+  document.getElementById('perfil-name').addEventListener('input', function () {
+    if (!perfilAvatarDataUrl) updatePerfilAvatarPreview();
+  });
+
+  // Redimensiona a foto no próprio celular antes de mandar (canvas),
+  // pra não guardar avatar gigante como string no banco do servidor.
+  function resizeImageToDataUrl(file, maxSize, quality) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        img.onload = function () {
+          var w = img.width, h = img.height;
+          var scale = Math.min(1, maxSize / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement('canvas');
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, cw, ch);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  document.getElementById('perfil-av-input').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    resizeImageToDataUrl(file, 220, 0.72).then(function (dataUrl) {
+      perfilAvatarDataUrl = dataUrl;
+      updatePerfilAvatarPreview();
+    }).catch(function () {});
+  });
+
+  document.getElementById('perfil-save').addEventListener('click', async function () {
+    var btn = this;
+    var msgEl = document.getElementById('perfil-msg');
+    msgEl.textContent = ''; msgEl.className = 'msg';
+    btn.disabled = true; btn.textContent = 'Salvando…';
+    try {
+      var body = {
+        name: document.getElementById('perfil-name').value.trim(),
+        instagramHandle: document.getElementById('perfil-ig').value.trim(),
+        bio: document.getElementById('perfil-bio').value.trim(),
+        avatarDataUrl: perfilAvatarDataUrl,
+      };
+      var res = await api('/api/community/profile', { method: 'PUT', body: JSON.stringify(body) });
+      currentProfile = res.profile;
+      updateHeaderAvatar(res.profile);
+      msgEl.textContent = 'Perfil salvo!';
+      msgEl.className = 'msg ok';
+    } catch (err) {
+      msgEl.textContent = err.message || 'Não deu pra salvar.';
+      msgEl.className = 'msg erro';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Salvar perfil';
+    }
+  });
+
+  // ---------------------------------------------------------------------
   // Start
   // ---------------------------------------------------------------------
   var auth = getAuth();
   if (auth && auth.token) {
     showApp();
-    switchTab('fila');
+    switchTab('inicio');
   } else {
     showLogin();
   }
