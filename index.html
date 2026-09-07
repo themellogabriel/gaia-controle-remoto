@@ -502,6 +502,18 @@
       </div>
     </section>
 
+    <!-- ---------- EDIÇÃO (Parte B, 07/09/2026: fila de renderização do PC +
+         status na nuvem -- "toda atualização do app ele fica com a tela
+         branca... precisaria ficar sempre aberto na tela de início, com
+         login e senha seria mil vezes melhor", pedido do Gabe. Diferente da
+         aba "Fila" abaixo, que é agendamento de repostagem.) ---------- -->
+    <section id="view-edicao" class="view">
+      <div class="refresh-row">
+        <button class="refresh-btn" id="btn-refresh-edicao"><span id="edicao-refresh-ic">↻</span> atualizar</button>
+      </div>
+      <div id="edicao-list"></div>
+    </section>
+
     <!-- ---------- FILA ---------- -->
     <section id="view-fila" class="view">
       <div class="refresh-row">
@@ -696,6 +708,7 @@
   <nav class="tabbar">
     <div class="tab-indicator" id="tab-indicator"></div>
     <button data-view="inicio" class="tab-btn active"><span class="ic">⌂</span>Início</button>
+    <button data-view="edicao" class="tab-btn"><span class="ic">▣</span>Edição</button>
     <button data-view="fila" class="tab-btn"><span class="ic">⊟</span>Fila</button>
     <button data-view="tiktok" class="tab-btn"><span class="ic">◷</span>TikTok</button>
     <button data-view="instagram" class="tab-btn"><span class="ic">⟳</span>Instagram</button>
@@ -859,6 +872,7 @@
       activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
     if (name === 'inicio') loadInicio();
+    if (name === 'edicao') loadEdicao();
     if (name === 'fila') loadFila();
     if (name === 'tiktok') loadTikTokTab();
     if (name === 'instagram') loadInstagramTab();
@@ -1055,6 +1069,84 @@
     }
   }
   document.getElementById('btn-refresh-fila').addEventListener('click', loadFila);
+
+  // ---------------------------------------------------------------------
+  // Edição -- fila de renderização do PC (o app desktop empurra cada item
+  // que muda via PUT /api/remote-queue/sync) + status do envio pra nuvem.
+  // "processando no PC" e "erro ao processar" só existem enquanto o vídeo
+  // ainda está sendo feito localmente -- ver esse vídeo de verdade
+  // (streaming/download) só é possível depois que ele confirma "na nuvem".
+  // ---------------------------------------------------------------------
+  function edicaoStatus(item) {
+    var status = item.status || 'aguardando';
+    var cloudStatus = item.cloudStatus || null;
+    if (status === 'erro') return { label: 'Erro ao processar', color: '#D05848', showView: false };
+    if (status === 'processando') return { label: 'Processando no PC…', color: '#7AA0C8', showView: false };
+    if (status !== 'pronto') return { label: 'Na fila do PC', color: '#C8A87A', showView: false };
+    if (cloudStatus === 'enviando') return { label: 'Enviando pra nuvem…', color: '#C8A87A', showView: false };
+    if (cloudStatus === 'na-nuvem') return { label: 'Na nuvem — pronto ✓', color: '#6FBF73', showView: true };
+    if (cloudStatus === 'erro') return { label: 'Erro ao enviar pra nuvem', color: '#D05848', showView: false };
+    return { label: 'Pronto no seu PC', color: '#C8A87A', showView: false };
+  }
+
+  async function loadEdicao() {
+    var listEl = document.getElementById('edicao-list');
+    var icEl = document.getElementById('edicao-refresh-ic');
+    icEl.classList.add('spin');
+    listEl.innerHTML = '';
+    try {
+      var resp = await api('/api/remote-queue');
+      var items = (resp && resp.items) || [];
+      if (!items.length) {
+        listEl.innerHTML =
+          '<div class="empty-state"><div class="big">✦</div>Nada na fila de edição ainda.<br/>Processe um vídeo no seu computador pra ver ele aparecer aqui.</div>';
+        return;
+      }
+      items.forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'queue-item';
+        var st = edicaoStatus(item);
+        var titulo = (item.name || '').trim();
+        var etiqueta = (item.ficha && item.ficha.tag) || item.profileName || 'Vídeo';
+        div.innerHTML =
+          '<div class="row1">' +
+            '<span class="plat-tag" style="color:var(--gold);background:rgba(200,168,122,0.08);border:1px solid rgba(200,168,122,0.22)">' + escapeHtml(etiqueta) + '</span>' +
+            '<span class="status-badge" style="color:' + st.color + '">' + st.label + '</span>' +
+          '</div>' +
+          '<div class="cap' + (titulo ? '' : ' empty') + '">' + (titulo ? escapeHtml(titulo) : 'Sem nome ainda') + '</div>' +
+          '<div class="meta">' +
+            '<span>' + fmtWhen(item.updatedAt) + '</span>' +
+            (st.showView ? '<button class="cancel" data-view-file="' + escapeHtml(item.cloudFileId || '') + '" style="color:#6FBF73">▶ Ver vídeo</button>' : '') +
+          '</div>';
+        listEl.appendChild(div);
+      });
+
+      listEl.querySelectorAll('[data-view-file]').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+          var fileId = btn.getAttribute('data-view-file');
+          if (!fileId) return;
+          var original = btn.textContent;
+          btn.textContent = 'abrindo…';
+          btn.disabled = true;
+          try {
+            var r = await api('/api/cloud/files/' + fileId + '/view-url');
+            window.open(r.viewUrl, '_blank');
+          } catch (e) {
+            btn.textContent = 'erro, tenta de novo';
+            setTimeout(function () { btn.textContent = original; btn.disabled = false; }, 1800);
+            return;
+          }
+          btn.textContent = original;
+          btn.disabled = false;
+        });
+      });
+    } catch (e) {
+      listEl.innerHTML = '<div class="empty-state">Não deu pra carregar a fila de edição agora.<br/>' + escapeHtml(e.message || '') + '</div>';
+    } finally {
+      icEl.classList.remove('spin');
+    }
+  }
+  document.getElementById('btn-refresh-edicao').addEventListener('click', loadEdicao);
 
   // ---------------------------------------------------------------------
   // TikTok — status + agendar
